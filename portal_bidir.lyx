@@ -1,0 +1,1483 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{color}
+\graphicspath{{images/}} 
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "libertine" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "libertine-ntxm" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing onehalf
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+A Note on Portal-based Bidirectional Path Construction
+\end_layout
+
+\begin_layout Author
+Hisanari Otsu
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+This document will introduce the formulation of 
+\emph on
+portal-based bidirectional path construction, 
+\emph default
+where the path construction involves in the generation of 
+\emph on
+intermediate subpaths
+\emph default
+ generated from the portal in the scene.
+ We will start the discussion by the general introduction of the light transport
+ simulation and existing bidirectional approaches, followed by the extension
+ of the approaches using intermediate subpaths.
+\end_layout
+
+\begin_layout Section
+Preliminaries
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Preliminaries"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Path Integral.
+\end_layout
+
+\begin_layout Standard
+Bidirectional approaches are often discussed with path integral formulation
+ of the light transport
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "veach1998rmc"
+literal "false"
+
+\end_inset
+
+.
+ According to the formulation, a pixel intensity 
+\begin_inset Formula $I$
+\end_inset
+
+ is defined as an integral of the 
+\emph on
+measurement contribution function 
+\begin_inset Formula $f_{j}\left(\bar{x}\right)$
+\end_inset
+
+
+\emph default
+ over the domain of 
+\emph on
+path space
+\emph default
+ 
+\begin_inset Formula $\Omega$
+\end_inset
+
+, with respect to the product area measure 
+\begin_inset Formula $d\mu$
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{equation}
+I=\int_{\Omega}f\left(\bar{x}\right)d\mu\left(\bar{x}\right).\label{eq:path_integral}
+\end{equation}
+
+\end_inset
+
+The path space 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ is defined as a space of paths of all possible length, specifically 
+\begin_inset Formula $\Omega:=\cup_{k=2}^{\infty}\Omega_{k}$
+\end_inset
+
+ where 
+\begin_inset Formula $\Omega_{k}$
+\end_inset
+
+ is a set of paths with 
+\begin_inset Formula $k$
+\end_inset
+
+ vertices (
+\begin_inset Formula $k\geq2$
+\end_inset
+
+).
+ We call an element of the path space 
+\begin_inset Formula $\bar{x}\in\Omega$
+\end_inset
+
+ as a 
+\begin_inset Formula $path$
+\end_inset
+
+ and defined as a sequence of points on the scene surface: 
+\begin_inset Formula $\bar{x}:=\mathbf{x}_{1}\mathbf{x}_{2}\cdots\mathbf{x}_{k}\in\Omega$
+\end_inset
+
+, where 
+\begin_inset Formula $\mathbf{x}_{i}\in\mathbf{\mathcal{M}}$
+\end_inset
+
+.
+ Given a path 
+\begin_inset Formula $\bar{x}$
+\end_inset
+
+ with vertices 
+\begin_inset Formula $k$
+\end_inset
+
+, the measurement contribution function is defined as
+\begin_inset Formula 
+\[
+f\left(\bar{x}\right)=L_{e}\left(\mathbf{x}_{1},\mathbf{x}_{2}\right)G\left(\mathbf{x_{\mathrm{1}}},\mathbf{x_{\mathrm{2}}}\right)\left[\prod_{i=2}^{k-1}f_{s}\left(\mathbf{x}_{i-1},\mathbf{x}_{i},\mathbf{x}_{i+1}\right)G\left(\mathbf{x}_{i},\mathbf{x}_{i+1}\right)\right]\cdot W_{e}\left(\mathbf{x}_{k},\mathbf{x}_{k-1}\right),
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $G\left(\mathbf{x},\mathbf{y}\right)$
+\end_inset
+
+ is the 
+\emph on
+geometry term
+\emph default
+ defined by 
+\begin_inset Formula 
+\[
+G\left(\mathbf{x},\mathbf{y}\right)=\frac{\left|\mathbf{N}_{\mathbf{x}}\cdot\omega_{\mathbf{x}\to\mathbf{y}}\right|\cdot\left|\mathbf{N}_{\mathbf{y}}\cdot\omega_{\mathbf{y}\to\mathbf{x}}\right|}{\left\Vert \mathbf{x}-\mathbf{y}\right\Vert ^{2}}V\left(\mathbf{x},\mathbf{y}\right)
+\]
+
+\end_inset
+
+ and 
+\begin_inset Formula $V\left(\mathbf{x},\mathbf{y}\right)$
+\end_inset
+
+ is a visibility function that equals to 1 when 
+\begin_inset Formula $\mathbf{x}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{y}$
+\end_inset
+
+ is mutually visible, otherwise 0.
+\end_layout
+
+\begin_layout Paragraph
+Bidirectional Path Tracing.
+\end_layout
+
+\begin_layout Standard
+Bidirectional path tracing (BDPT) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "veach1995mis,lafortune93bidirectional"
+literal "false"
+
+\end_inset
+
+ constructs a path by combining two 
+\begin_inset Formula $subpaths$
+\end_inset
+
+ traced from both a camera and a light source, each called 
+\emph on
+eye subpath 
+\emph default
+and 
+\emph on
+light subpath
+\emph default
+ respectively.
+ BDPT constructs the complete paths by connecting the vertices between eye
+ and light subpaths.
+ This implies we have multiple sampling strategies to generate a single
+ path.
+ BDPT combines multiple sampling strategies by multiple importance sampling
+ (MIS)
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "veach1995mis"
+literal "false"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+We denote a light subpath by 
+\begin_inset Formula $\bar{y}=\mathbf{y}_{1}\mathbf{y}_{2}\cdots\mathbf{y}_{s}$
+\end_inset
+
+ and an eye subpath by 
+\begin_inset Formula $\bar{z}=\mathbf{z}_{1}\mathbf{z}_{2}\cdots\mathbf{z}_{t}$
+\end_inset
+
+ where 
+\begin_inset Formula $s$
+\end_inset
+
+ and 
+\begin_inset Formula $t$
+\end_inset
+
+ are the number of vertices in each subpath.
+ And we denote the complete path generated by connecting the vertices 
+\begin_inset Formula $\mathbf{y}_{s}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{z}_{t}$
+\end_inset
+
+ by 
+\begin_inset Formula $\bar{x}_{s,t}=\bar{y}\bar{z}=\mathbf{y}_{1}\mathbf{y}_{2}\cdots\mathbf{y}_{s}\mathbf{z}_{t}\cdots\mathbf{z}_{2}\mathbf{z}_{1}$
+\end_inset
+
+.
+ We note that the strategy can be uniquely indexed by the number of vertices
+ used for each subpath, so we denote the sampling strategy to generate the
+ path by a tuple 
+\begin_inset Formula $\left(s,t\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+We note that 
+\begin_inset Formula $s=0$
+\end_inset
+
+ or 
+\begin_inset Formula $t=0$
+\end_inset
+
+ means the path is constructed by direct hit to light or camera.
+ For instance when 
+\begin_inset Formula $s=0$
+\end_inset
+
+, the light subpath is empty (
+\begin_inset Formula $\bar{y}=\varnothing$
+\end_inset
+
+) and the connected path is defined by 
+\begin_inset Formula $\bar{x}_{0,t}=\bar{z}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Each subpath is generated by combination of local sampling strategies, where
+ a new vertex is generated by a conditional density with respect to the
+ previous vertex except for the initial vertex.
+ This process is denoted by 
+\begin_inset Formula 
+\[
+\text{\ensuremath{\mathbf{v}_{1}}\ensuremath{\sim}}p\left(\cdot\right),\quad\ensuremath{\mathbf{v}_{i}}\sim p\left(\cdot\mid\ensuremath{\mathbf{v}_{i-1}}\right),
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\mathbf{v}$
+\end_inset
+
+ is either 
+\begin_inset Formula $\mathbf{z}$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathbf{y}$
+\end_inset
+
+, and 
+\begin_inset Formula $p\left(\cdot\right)$
+\end_inset
+
+ is a PDF with respect to area measure.
+ Note that multiple vertices can be samples in the same time (joint importance
+ sampling) but for simplicity we assume the vertices are sampled by the
+ conditional densities only depends on the previous vertex.
+ 
+\end_layout
+
+\begin_layout Standard
+The PDF for constructing the path 
+\begin_inset Formula $\bar{x}$
+\end_inset
+
+ by the strategy 
+\begin_inset Formula $\left(s,t\right)$
+\end_inset
+
+ is therefore, 
+\begin_inset Formula 
+\begin{align}
+p_{s,t}\left(\bar{x}\right) & =p\left(\bar{y}\right)p\left(\bar{z}\right)\nonumber \\
+p\left(\bar{y}\right) & =\begin{cases}
+1 & s=0\\
+p\left(\mathbf{y}_{1}\right)\prod_{i=2}^{s}p\left(\mathbf{y}_{i}\mid\ensuremath{\mathbf{y}_{i-1}}\right) & \text{otherwise}
+\end{cases}\label{eq:bdpt_path_pdf}\\
+p\left(\bar{z}\right) & =\begin{cases}
+1 & t=0\\
+p\left(\mathbf{z}_{1}\right)\prod_{i=2}^{t}p\left(\mathbf{z}_{i}\mid\ensuremath{\mathbf{z}_{i-1}}\right) & \text{otherwise.}
+\end{cases}\nonumber 
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A path 
+\begin_inset Formula $\bar{x}$
+\end_inset
+
+ can be generated by arbitrary strategies 
+\begin_inset Formula $\left(s,t\right)$
+\end_inset
+
+.
+ BDPT utilizes multiple importance sampling to combine the estimate from
+ the multiple strategies.
+ The multi-sample estimate of Eq.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:path_integral"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ is written as
+\begin_inset Formula 
+\[
+\hat{I}_{\mathrm{BDPT}}=\sum_{s,t}w_{s,t}\left(\bar{x}_{s,t}\right)\frac{f\left(\bar{x}_{s,t}\right)}{p_{s,t}\left(\bar{x}_{s,t}\right)},
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\bar{x}_{s,t}\sim p_{s,t}\left(\cdot\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $w_{s,t}\left(\bar{x}_{s,t}\right)$
+\end_inset
+
+ being a MIS weight which satisfies the conditions in the original paper
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "veach1995mis"
+literal "false"
+
+\end_inset
+
+.
+ The most notable weighting scheme is 
+\emph on
+balance heuristic.
+\end_layout
+
+\begin_layout Section
+Path Sampling with Intermediate Subpath
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:path_sampling_with_interm_subpath"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset CommandInset include
+LatexCommand input
+filename "images/fig_path_construction_intermediate.pdf_tex"
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:path_construction_intermediate"
+
+\end_inset
+
+Path construction by intermediate subpath.
+ A path is constructed by connecting subpaths with two connections, vertices
+ between light (orange) and intermediate (red) subpaths, and vertices between
+ eye (blue) and intermediate (red) subpaths.
+ Arrows show the directions of the traced rays.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Overview.
+\end_layout
+
+\begin_layout Standard
+We will develop a new path construction technique based on the subpath generated
+ from the arbitrary scene surface, called 
+\emph on
+intermediate subpath.
+
+\emph default
+ A complete path is constructed by two connections, one by connecting vertices
+ between eye and intermediate subpaths, and the other by connecting vertices
+ between light and intermediate subpaths (Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:path_construction_intermediate"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
+ Followed by the formulation, we will introduce portal-based bidirectional
+ path sampling as a special case in Sec.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:portal_bdpt"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Paragraph
+Generating Intermediate Subpath.
+\end_layout
+
+\begin_layout Standard
+An intermediate subpath is generated by first sampling a point on the surface
+ 
+\begin_inset Formula $\mathbf{w}_{0}\in\mathcal{M}$
+\end_inset
+
+, followed by tracing a sequence of points on the scene surface in 
+\emph on
+two directions
+\emph default
+.
+ The vertices samples according to the directions are categorized by the
+ possible connection to the vertices either in light or eye subpaths.
+ We denote the vertices connected to light subpath by the superscript 
+\begin_inset Formula $\leftarrow$
+\end_inset
+
+ and the vertices connected by the eye subpath by 
+\begin_inset Formula $\to$
+\end_inset
+
+.
+ We denote the sequence of vertices in each direction by 
+\begin_inset Formula $\bar{w}^{\leftarrow}:=\mathbf{w}_{1}^{\leftarrow}\mathbf{w}_{2}^{\leftarrow}\cdots\mathbf{w}_{s'}^{\leftarrow}$
+\end_inset
+
+ and 
+\begin_inset Formula $\bar{w}^{\to}:=\mathbf{w}_{1}^{\to}\mathbf{w}_{2}^{\to}\cdots\mathbf{w}_{t'}^{\to}$
+\end_inset
+
+, where 
+\begin_inset Formula $s'$
+\end_inset
+
+ and 
+\begin_inset Formula $t'$
+\end_inset
+
+ are number of extended vertices in each direction.
+ Concatenating the vertices, an intermediate subpath 
+\begin_inset Formula $\bar{w}$
+\end_inset
+
+ can be represented by
+\begin_inset Formula 
+\[
+\bar{w}=\mathbf{w}_{s'}^{\leftarrow}\cdots\mathbf{w}_{1}^{\leftarrow}\mathbf{w}_{0}\mathbf{w}_{1}^{\to}\cdots\mathbf{w}_{t'}^{\to}.
+\]
+
+\end_inset
+
+Similar to the generation of light and eye subpaths, the vertices except
+ 
+\begin_inset Formula $\mathbf{w}_{0}$
+\end_inset
+
+ are sampled according to the local sampling strategy given the previous
+ vertex.
+ This process is summarized by
+\begin_inset Formula 
+\[
+\mathbf{w}_{0}\sim p\left(\cdots\right),\quad\mathbf{w}_{i}^{\leftarrow}\sim p\left(\cdot\mid\mathbf{w}_{i-1}^{\leftarrow}\right),\quad\mathbf{w}_{i'}^{\to}\sim p\left(\cdot\mid\mathbf{w}_{i'-1}^{\to}\right),
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $i=1,\dots,s'$
+\end_inset
+
+, 
+\begin_inset Formula $i'=1,\dots,t'$
+\end_inset
+
+, and 
+\begin_inset Formula $\mathbf{w}_{0}\equiv\mathbf{w}_{0}^{\leftarrow}\equiv\mathbf{w}_{0}^{\to}$
+\end_inset
+
+.
+ Therefore, the joint PDF for the intermediate path can be written as
+\begin_inset Formula 
+\begin{align*}
+p\left(\bar{w}\right) & =p\left(\mathbf{w}_{0}\right)p\left(\mathbf{w}_{1}^{\leftarrow}\cdots\mathbf{w}_{s'}^{\leftarrow}\right)p\left(\mathbf{w}_{1}^{\to}\cdots\mathbf{w}_{t'}^{\to}\right)\\
+ & =p\left(\mathbf{w}_{0}\right)\cdot\left[\prod_{i=1}^{s'}p\left(\mathbf{w}_{i}^{\leftarrow}\mid\mathbf{w}_{i-1}^{\leftarrow}\right)\right]\cdot\left[\prod_{i=1}^{t'}p\left(\mathbf{w}_{i}^{\to}\mid\mathbf{w}_{i-1}^{\to}\right)\right].
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Connecting Subpaths.
+\end_layout
+
+\begin_layout Standard
+Similar to BDPT, a complete path is constructed by connecting vertices in
+ subpaths, but with two vertex connections.
+ We use the same notations for light/eye subpaths as in Sec.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Preliminaries"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ The first connection is the vertices between light and intermediate subpaths.
+ We denote the connecting vertices by 
+\begin_inset Formula $\mathbf{y}_{s}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{w}_{s'}^{\leftarrow}$
+\end_inset
+
+.
+ Similarly, the second connection is done between the vertices in eye and
+ intermediate subpaths, denoted by 
+\begin_inset Formula $\mathbf{z}_{t}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{w}_{t'}^{\to}$
+\end_inset
+
+.
+ Therefore, the connected path can be represented by 
+\begin_inset Formula 
+\begin{equation}
+\bar{x}=\bar{y}\bar{w}\bar{z}=\mathbf{y}_{1}\cdots\mathbf{y}_{s}\mathbf{w}_{s'}^{\leftarrow}\cdots\mathbf{w}_{1}^{\leftarrow}\mathbf{w}_{0}\mathbf{w}_{1}^{\to}\cdots\mathbf{w}_{t'}^{\to}\mathbf{z}_{t}\cdots\mathbf{z}_{1},\label{eq:complete_path_with_interm}
+\end{equation}
+
+\end_inset
+
+which generate a path with 
+\begin_inset Formula $s+s'+t'+t+1$
+\end_inset
+
+ vertices.
+ The path sampling strategy involving the intermediate subpath can be indexed
+ by 4-tuple 
+\begin_inset Formula $\left(s,s',t',t\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+We note that the connection strategy can be naturally defined for the cases
+ when either of 
+\begin_inset Formula $s,s',t',t$
+\end_inset
+
+ is zero, similar to the connection in BDPT.
+ For instance, when 
+\begin_inset Formula $s=0$
+\end_inset
+
+ and 
+\begin_inset Formula $s'>0$
+\end_inset
+
+, the path is constructed by the direct hit to the light by the intermediate
+ subpath, that is, 
+\begin_inset Formula $\bar{x}=\bar{w}\bar{z}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We note that the path sampled by the strategy with intermediate path can
+ also be sample by the strategies by BDPT described in Sec.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Preliminaries"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+, which implies we can combine both strategies via MIS.
+ To combine both cases, we augment the index with the number of connections
+ 
+\begin_inset Formula $c\in\left\{ 1,2\right\} $
+\end_inset
+
+, resulting 5-tuple index 
+\begin_inset Formula $\mathbf{j}=\left(c,s,s',t',t\right)\in\mathcal{J}$
+\end_inset
+
+ where 
+\begin_inset Formula $\mathcal{J}$
+\end_inset
+
+ is an indexed family of the valid strategies.
+ Then the path connection strategy can be defined for both cases:
+\begin_inset Formula 
+\[
+\bar{x}=\begin{cases}
+\bar{y}\bar{z} & c=1\\
+\bar{y}\bar{w}\bar{z} & c=2.
+\end{cases}
+\]
+
+\end_inset
+
+Therefore the PDF for constructing a path 
+\begin_inset Formula $\bar{x}$
+\end_inset
+
+ by the strategy 
+\begin_inset Formula $\mathbf{j}$
+\end_inset
+
+ can be written as
+\begin_inset Formula 
+\[
+p_{\mathbf{j}}\left(\bar{x}\right)=\begin{cases}
+p\left(\bar{y}\right)p\left(\bar{z}\right) & c=1\\
+p\left(\bar{y}\right)p\left(\bar{w}\right)p\left(\bar{z}\right) & c=2.
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Combining Strategies.
+\end_layout
+
+\begin_layout Standard
+We can directly apply MIS for the all possible strategies 
+\begin_inset Formula $\mathbf{j}$
+\end_inset
+
+.
+ The multi-sample estimate can be written as 
+\begin_inset Formula 
+\begin{equation}
+\hat{I}_{\mathrm{BDPT-IM}}=\sum_{\mathbf{j}\in\mathcal{J}}w_{\mathbf{j}}\left(\bar{x}_{\mathbf{j}}\right)\frac{f\left(\bar{x}_{\mathbf{j}}\right)}{p_{\mathbf{j}}\left(\bar{x}_{\mathbf{j}}\right)},\label{eq:est_bdpt_im}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $\bar{x}_{\mathbf{j}}\sim p_{\mathbf{j}}\left(\cdot\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/fig_intermediate_path_within_same_subpath.svg
+	width 100text%
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:reusing_part_of_intermediate_subpath"
+
+\end_inset
+
+Empirical sampling strategy reusing a part of intermediate path (red).
+ In this case, the computation of the path PDF is not feasible because the
+ part of the intermediate subpath might be taken from the arbitrary paths
+ (light orange).
+ We circumvent this problem by considering the sampling strategy so that
+ the intermediate subpath always contains 
+\begin_inset Formula $\mathbf{w}_{0}.$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Discussion.
+\end_layout
+
+\begin_layout Standard
+Our path sampling strategy involving in intermediate subpath uses two pre-define
+d categories of vertices to be connected either to the vertices in light
+ or eye subpaths.
+ In other words, the intermediate subpath is always selected so that it
+ contains the vertex 
+\begin_inset Formula $\mathbf{w}_{0}.$
+\end_inset
+
+ This design choice is intentional, since otherwise the sampling strategy
+ cannot be uniquely identified.
+\end_layout
+
+\begin_layout Standard
+For instance, we consider an empirical sampling strategy reusing a part
+ of intermediate subpath (Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:reusing_part_of_intermediate_subpath"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+), by connecting the vertices 
+\begin_inset Formula $\mathbf{y}_{s}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{w}_{s_{1}}^{\leftarrow}$
+\end_inset
+
+, and the vertices 
+\begin_inset Formula $\mathbf{y}_{s}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{w}_{s_{2}}^{\leftarrow}$
+\end_inset
+
+ where 
+\begin_inset Formula $s_{1}>s_{2}>0$
+\end_inset
+
+.
+ In this case, the local vertex PDF 
+\begin_inset Formula $p\left(\mathbf{w}_{s_{2}}^{\leftarrow}\right)$
+\end_inset
+
+ is in fact a marginalized PDF, because the vertex can be samples from arbitrary
+ paths with the number of vertices 
+\begin_inset Formula $s_{2}$
+\end_inset
+
+ from 
+\begin_inset Formula $\mathbf{w}_{0}$
+\end_inset
+
+.
+ This strategy is thus not feasible to be estimated.
+\end_layout
+
+\begin_layout Standard
+We also note that one of the parts of intermediate subpath in each direction
+ can be sampled from the conditional distribution of the other part, while
+ in the above formulation we assumed the two distributions are independent.
+ This is analogous to the fact that the light subpath generation can actually
+ be dependent on the already-sampled eye subpath (e.g., next event estimation).
+ We will use this fact in the next section to design the path sampling technique
+ using a portal.
+\end_layout
+
+\begin_layout Section
+Portal-based Bidirectional Path Sampling
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:portal_bdpt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Overview.
+\end_layout
+
+\begin_layout Standard
+In this section, we will develop a bidirectional path sampling technique
+ based on 
+\emph on
+portal.
+ 
+\emph default
+A portal is a virtual object in the scene that helps to improve the efficiency
+ of sampling, typically involving the situation where the blocking geometries
+ are the cause of inefficiency.
+ The portal is mainly used in the context of path tracing, where the information
+ of portals are used to construct the local directional sampling distribution
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bitterli2015portals"
+literal "false"
+
+\end_inset
+
+.
+ We will extend the idea, by redefining the concept in the context of bidirectio
+nal path sampling.
+ Our formulation is based on the path sampling with intermediate subpath
+ described in Sec.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:path_sampling_with_interm_subpath"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+The idea is to consider a portal as a part of scene surface 
+\begin_inset Formula $\mathcal{M}$
+\end_inset
+
+ with 
+\emph on
+pass-through
+\emph default
+ material, where the incoming ray doesn't change its direction after the
+ interaction on the portal.
+ This idea makes it possible to handle the portal in the context bidirectional
+ path sampling with intermediate subpath, by constructing a position sampling
+ distribution on the portal.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Representation of Portals.
+\end_layout
+
+\begin_layout Standard
+We consider a portal as a part of scene surface 
+\begin_inset Formula $\mathcal{M}.$
+\end_inset
+
+ We denote a set of points on the portal by 
+\begin_inset Formula $\mathcal{M}_{p}\subset\mathcal{M}$
+\end_inset
+
+.
+ We can use any representation of the surface, such as triangle mesh or
+ parametric surface, as long as we can construct the position sampling distribut
+ion on the surface 
+\begin_inset Formula $\mathcal{M}_{p}$
+\end_inset
+
+.
+ This representation naturally describes how we handle the multiple portals.
+ 
+\end_layout
+
+\begin_layout Standard
+A point on the portal is in a vacuum thus it involves in no scattering event.
+ This scattering event can be described by assigning the 
+\emph on
+pass-through
+\emph default
+ material on the portal surfaces, which doesn't change the incoming ray
+ direction.
+ A pass-through material can be modeled by the BSDF:
+\begin_inset Formula 
+\begin{equation}
+f_{s}\left(\mathbf{x},\omega_{o},\omega_{i}\right)=\delta_{\sigma}\left(H\left(\omega_{0},\omega_{i}\right)\right),\label{eq:bsdf_pass_through}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $\int_{\Omega}\delta_{\sigma}\left(H\left(\omega_{o},\omega\right)\right)d\sigma^{\bot}\left(\omega\right)=1$
+\end_inset
+
+ and 
+\begin_inset Formula $H\left(\omega,\omega'\right)=\omega+\omega'$
+\end_inset
+
+ is the unnormalized half vector.
+ Note that the idea behind this scattering is conceptually analogous to
+ null scattering discussed in the rendering of heterogeneous volume
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "novak2018vol"
+literal "false"
+
+\end_inset
+
+.
+ We note that importance sampling of the BSDF corresponds to the deterministic
+ operation to change the incoming direction: 
+\begin_inset Formula $\omega_{o}=-\omega_{i}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset CommandInset include
+LatexCommand input
+filename "images/fig_portal_bdpts.pdf_tex"
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:gen_interm_portal"
+
+\end_inset
+
+Generation of intermediate subpath from a portal.
+ We consider a portal as scene surface with pass-through material.
+ A vertex 
+\begin_inset Formula $\mathbf{w}_{0}$
+\end_inset
+
+ is sampled from the surface on the portal.
+ A part of subpath 
+\begin_inset Formula $\bar{w}^{\to}$
+\end_inset
+
+ is initially generated by tracing rays from 
+\begin_inset Formula $\mathbf{w}_{0}$
+\end_inset
+
+.
+ The initial direction of the opposite part of the subpath 
+\begin_inset Formula $\bar{w}^{\leftarrow}$
+\end_inset
+
+ starts from the direction 
+\begin_inset Formula $\omega_{0}^{\leftarrow}$
+\end_inset
+
+, which is aligned to the initial direction 
+\begin_inset Formula $\omega_{0}^{\to}$
+\end_inset
+
+ of a part of subpath 
+\begin_inset Formula $\bar{w}^{\to}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Intermediate Subpath From Portal.
+\end_layout
+
+\begin_layout Standard
+Since we considered the portal as a part of the scene surface, we can consider
+ the subpath sampled from the portal as an intermediate subpath.
+ Here we will describe the sampling process (Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:gen_interm_portal"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+First we sample a point on the portal 
+\begin_inset Formula $\mathbf{w}_{0}\sim p_{A}\left(\cdot\right)$
+\end_inset
+
+ according to the sampling distribution constructed on the portal surface
+ 
+\begin_inset Formula $\mathcal{M}_{P}$
+\end_inset
+
+.
+ Next we sample a direction 
+\begin_inset Formula $\omega_{0}^{\to}\sim p_{\sigma^{\bot}}\left(\cdot\mid\mathbf{\mathbf{w}}_{0}\right)$
+\end_inset
+
+ from the point 
+\begin_inset Formula $\mathbf{w}_{0}$
+\end_inset
+
+, then finds the intersected surface 
+\begin_inset Formula $\mathbf{w}_{1}^{\to}$
+\end_inset
+
+ in the direction of the ray 
+\begin_inset Formula $\left(\mathbf{\mathbf{w}}_{0},\omega_{0}^{\to}\right)$
+\end_inset
+
+.
+ The following process is similar to the sampling of light/eye subpaths
+ and we have a part of the intermediate subpath 
+\begin_inset Formula $\bar{w}^{\to}$
+\end_inset
+
+.
+ Note that you can arbitrary choose the initial directional sampling distributio
+n with PDF 
+\begin_inset Formula $p_{\sigma^{\bot}}\left(\omega_{0}\mid\mathbf{\mathbf{w}}_{0}\right)$
+\end_inset
+
+, e.g., uniform distribution on an unit sphere around 
+\begin_inset Formula $\mathbf{w}_{0}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The initial direction for the second part of the subpath 
+\begin_inset Formula $\omega_{0}^{\leftarrow}$
+\end_inset
+
+ are sampled from the delta distribution: 
+\begin_inset Formula $\omega_{0}^{\leftarrow}\sim\delta_{\sigma}\left(H\left(\cdot,\omega_{0}^{\to}\right)\right)$
+\end_inset
+
+, that is, 
+\begin_inset Formula $\omega_{0}^{\leftarrow}=-\omega_{0}^{\to}$
+\end_inset
+
+.
+ The following process is similar to the sampling of light/eye subpaths
+ and we have 
+\begin_inset Formula $\bar{w}^{\leftarrow}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Therefore, the PDF of the strategy 
+\begin_inset Formula $\left(s',t'\right)$
+\end_inset
+
+ to generate the intermediate subpath 
+\begin_inset Formula $\bar{w}=\bar{w}^{\leftarrow}\mathbf{w}_{0}\bar{w}^{\rightarrow}$
+\end_inset
+
+ can be written as
+\begin_inset Formula 
+\begin{align*}
+p_{s',t'}\left(\bar{w}\right) & =p\left(\mathbf{w}_{0}\right)p\left(\bar{w}^{\leftarrow}\right)p\left(\bar{w}^{\rightarrow}\right)\\
+ & =p\left(\mathbf{w}_{0}\right)\cdot\left[\delta_{\sigma}\left(H\left(\omega_{0}^{\leftarrow},\omega_{0}^{\to}\right)\right)\frac{G\left(\mathbf{w}_{0},\mathbf{w}_{1}^{\leftarrow}\right)}{\left|\mathbf{N}_{\mathbf{w}_{0}}\cdot\omega_{0}^{\leftarrow}\right|}\prod_{i=2}^{s'}p\left(\mathbf{w}_{i}^{\leftarrow}\mid\mathbf{w}_{i-1}^{\leftarrow}\right)\right]\\
+ & \qquad\qquad\cdot\left[p_{\sigma^{\bot}}\left(\omega_{0}\mid\mathbf{\mathbf{w}}_{0}\right)G\left(\mathbf{w}_{0},\mathbf{w}_{1}^{\to}\right)\prod_{i=1}^{t'}p\left(\mathbf{w}_{i}^{\to}\mid\mathbf{w}_{i-1}^{\to}\right)\right],
+\end{align*}
+
+\end_inset
+
+where the terms 
+\begin_inset Formula $G\left(\mathbf{w}_{0},\mathbf{w}_{1}^{\leftarrow}\right)/\left|\mathbf{N}_{\mathbf{w}_{0}}\cdot\omega_{0}^{\leftarrow}\right|$
+\end_inset
+
+ and 
+\begin_inset Formula $G\left(\mathbf{w}_{0},\mathbf{w}_{1}^{\to}\right)$
+\end_inset
+
+ are necessary to convert the measure of the PDFs to area measure.
+\end_layout
+
+\begin_layout Standard
+Since 
+\begin_inset Formula $\mathbf{w}_{1}^{\leftarrow}$
+\end_inset
+
+ is sampled from delta distribution, the PDF contains delta function.
+ This term will be canceled out when we evaluate the path contribution 
+\begin_inset Formula $f\left(\bar{x}\right)/p\left(\bar{x}\right)$
+\end_inset
+
+ since the numerator contain the same delta function (Eq.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:bsdf_pass_through"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Paragraph
+Combining Strategies.
+\end_layout
+
+\begin_layout Standard
+We can apply MIS to the paths constructed from the portal (Eq.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:est_bdpt_im"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
+ We note that MIS weight computation needs to care about the possibility
+ that a path can contain multiple points on the portal, even if the path
+ is constructed without intermediate path.
+ Also we need to be careful that the interaction involving in delta function
+ cannot be sampled with other directional sampling strategies.
+ Thus we need to exclude the strategy 
+\begin_inset Formula $\mathbf{j}'$
+\end_inset
+
+ from the computation of MIS weight if the path 
+\begin_inset Formula $\bar{x}$
+\end_inset
+
+ is sampled by the strategy 
+\begin_inset Formula $\mathbf{j}\neq\mathbf{j}'$
+\end_inset
+
+ cannot be sampled by the strategy 
+\begin_inset Formula $\mathbf{j}'$
+\end_inset
+
+.
+ This means in MIS computation the position of the vertex 
+\begin_inset Formula $\mathbf{x}\in\mathcal{M}_{P}$
+\end_inset
+
+ in a path can be fixed, since the path cannot be sampled if the position
+ of the vertices on portal is different.
+ 
+\end_layout
+
+\begin_layout Paragraph
+Known Issue.
+\end_layout
+
+\begin_layout Standard
+Since we modeled a portal as virtual scene surface with pass-through material,
+ the aforementioned strategy based on intermediate subpath cannot sample
+ the sequence of consecutive vertices 
+\begin_inset Formula $\mathbf{v}_{i}\mathbf{v}_{i+1}\mathbf{v}_{i+2}$
+\end_inset
+
+ where 
+\begin_inset Formula $\mathbf{v}_{i},\mathbf{v}_{i+2}\in\mathcal{M}_{P}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{v}_{i+1}\notin\mathcal{M}_{P}$
+\end_inset
+
+.
+ This is because we cannot connect vertices 
+\begin_inset Formula $\mathbf{v}_{i}\mathbf{v}_{i+1}$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathbf{v}_{i+1}\mathbf{v}_{i+2}$
+\end_inset
+
+ since one of two vertices contains delta component.
+ This issue has the same nature to well-known problem that specular-diffuse-spec
+ular vertices cannot be sampled by vertex connection.
+ Presumably, this issue can be fixed by defining extended connection though
+ portal vertices employing the similar idea to manifold next event estimation
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "hanika2015mnee"
+literal "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "paper"
+options "plain"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
