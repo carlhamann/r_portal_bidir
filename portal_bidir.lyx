@@ -90,6 +90,10 @@ A Note on Portal-based Bidirectional Path Construction
 Hisanari Otsu
 \end_layout
 
+\begin_layout Date
+April 30, 2020
+\end_layout
+
 \begin_layout Section
 Introduction
 \end_layout
@@ -1325,7 +1329,7 @@ Therefore, the PDF of the strategy
 \begin{align*}
 p_{s',t'}\left(\bar{w}\right) & =p\left(\mathbf{w}_{0}\right)p\left(\bar{w}^{\leftarrow}\right)p\left(\bar{w}^{\rightarrow}\right)\\
  & =p\left(\mathbf{w}_{0}\right)\cdot\left[\delta_{\sigma}\left(H\left(\omega_{0}^{\leftarrow},\omega_{0}^{\to}\right)\right)\frac{G\left(\mathbf{w}_{0},\mathbf{w}_{1}^{\leftarrow}\right)}{\left|\mathbf{N}_{\mathbf{w}_{0}}\cdot\omega_{0}^{\leftarrow}\right|}\prod_{i=2}^{s'}p\left(\mathbf{w}_{i}^{\leftarrow}\mid\mathbf{w}_{i-1}^{\leftarrow}\right)\right]\\
- & \qquad\qquad\cdot\left[p_{\sigma^{\bot}}\left(\omega_{0}\mid\mathbf{\mathbf{w}}_{0}\right)G\left(\mathbf{w}_{0},\mathbf{w}_{1}^{\to}\right)\prod_{i=1}^{t'}p\left(\mathbf{w}_{i}^{\to}\mid\mathbf{w}_{i-1}^{\to}\right)\right],
+ & \qquad\qquad\cdot\left[p_{\sigma^{\bot}}\left(\omega_{0}\mid\mathbf{\mathbf{w}}_{0}\right)G\left(\mathbf{w}_{0},\mathbf{w}_{1}^{\to}\right)\prod_{i=2}^{t'}p\left(\mathbf{w}_{i}^{\to}\mid\mathbf{w}_{i-1}^{\to}\right)\right],
 \end{align*}
 
 \end_inset
