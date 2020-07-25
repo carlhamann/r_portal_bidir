@@ -12,7 +12,7 @@
 
 # Tokens
 public
-lightmetrica-v3
+lightmetrica-v3*
 *.ipynb
 .lmenv
 .lmenv_*
