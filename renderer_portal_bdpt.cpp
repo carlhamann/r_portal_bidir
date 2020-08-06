@@ -18,7 +18,7 @@
 LM_NAMESPACE_BEGIN(LM_NAMESPACE)
 
 LM_NAMESPACE_BEGIN(portalbidir)
-   
+
 // Sample an intermediate subpath of length 1 from the portal.
 // Conventionally, we assume the normal of the portal mesh is facing toward the outside.
 // That is, vs[0] connects to the light subpath and vs[1] connects to the eye subpath.
@@ -133,6 +133,101 @@ std::optional<Path> connect_subpaths(const Scene* scene, const Path& subpathL, c
     return path;
 }
 
+// Version for inter renderer
+std::optional<Path> connect_subpaths_inter(const Scene* scene, const Path& subpathL, const Path& subpathE, const Path& subpathI, int s, int t) {
+	assert(s >= 0 && t >= 0);
+	//assert(!(s == 0 && t == 0);		// Only intermediate subpath could be inserted
+	assert(subpathI.num_verts() == 2);
+
+	Path path;
+
+	if (s == 0 && t == 0)
+	{
+		// Case: Only intermediate subpath
+		const auto& vIL = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[1];
+
+		if (vIL.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		// Just intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+	}
+	else if (s == 0) {
+		// Case: No light subpath, single connection
+		const auto& vE = subpathE.vs[t - 1];
+		const auto& vIE = subpathI.vs[1];
+
+		// Check invalid connection
+		if (vE.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+		if (!scene->visible(vE.sp, vIE.sp)) {
+			return {};
+		}
+
+		// Copy intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+
+		// Copy eye subpath
+		path.vs.insert(path.vs.end(), subpathE.vs.rend() - t, subpathE.vs.rend());
+	}
+	else if (t == 0) {
+		// Case: No eye subpath, single connection
+		const auto& vL = subpathL.vs[s - 1];
+		const auto& vIL = subpathI.vs[0];
+
+		// Check invalid connection
+		if (vL.sp.geom.infinite || vIL.sp.geom.infinite) {
+			return {};
+		}
+		if (!scene->visible(vL.sp, vIL.sp)) {
+			return {};
+		}
+
+		// Copy light subpath
+		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
+
+		// Copy intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+	}
+	else {
+		// Case: Other cases, double connections
+		const auto& vL = subpathL.vs[s - 1];
+		const auto& vE = subpathE.vs[t - 1];
+		const auto& vIL = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[1];
+		if (vL.sp.geom.infinite || vE.sp.geom.infinite || vIL.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+		if (!scene->visible(vL.sp, vIL.sp) || !scene->visible(vIE.sp, vE.sp)) {
+			return {};
+		}
+		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+		path.vs.insert(path.vs.end(), subpathE.vs.rend() - t, subpathE.vs.rend());
+	}
+
+	// Check endpoint types
+	// We assume the initial vertex of eye subpath is always camera endpoint.
+	// That is scene.is_camera(vE) is always true.
+	auto& vL = path.vs.front();
+	if (!scene->is_light(vL.sp)) {
+		return {};
+	}
+	auto& vE = path.vs.back();
+	if (!scene->is_camera(vE.sp)) {
+		return {};
+	}
+
+	// Update the endpoint types
+	vL.sp = vL.sp.as_type(SceneInteraction::LightEndpoint);
+	vE.sp = vE.sp.as_type(SceneInteraction::CameraEndpoint);
+
+	return path;
+}
+
 // Evaluate connection term
 Vec3 eval_connection_term(const Path& path, const Scene* scene, int s) {
     const int n = path.num_verts();
@@ -199,6 +294,83 @@ Vec3 eval_connection_term(const Path& path, const Scene* scene, int s) {
     return cst;
 }
 
+// Evaluate connection term
+Vec3 eval_connection_term_inter(const Path& path, const Scene* scene, int s) {
+	const int n = path.num_verts();
+	const int t = n - s - 2;
+
+	// --  : connection
+	// ... : unrelated vertices
+
+	// Helper function to compute related terms for connections.
+	// Note that vL or vE might not the end of the light/eye subpath.
+	// j: index of the vertex with connection from endpoint
+	// vL and vE must not be nullptr.
+	const auto connection_term = [&](int j, TransDir trans_dir) -> Vec3 {
+		// Index of vL from L
+		const int i = trans_dir == TransDir::LE ? j : path.num_verts() - 2 - j;
+
+		// ... vL_prev vL -- vE vE_prev ...
+		const auto* vL = path.vertex_at(i, TransDir::LE);
+		const auto* vE = path.vertex_at(i + 1, TransDir::LE);
+		const auto* vL_prev = path.vertex_at(i - 1, TransDir::LE);
+		const auto* vE_prev = path.vertex_at(i + 2, TransDir::LE);
+
+		// Computer terms
+		const auto fsL = path::eval_contrb_direction(
+			scene, vL->sp, path.direction(vL, vL_prev), path.direction(vL, vE), vL->comp, TransDir::LE, true);
+		const auto fsE = path::eval_contrb_direction(
+			scene, vE->sp, path.direction(vE, vE_prev), path.direction(vE, vL), vE->comp, TransDir::EL, true);
+		const auto G = surface::geometry_term(vL->sp.geom, vE->sp.geom);
+
+		return fsL * G * fsE;
+	};
+
+	Vec3 cst{};
+
+	if (s == 0 && t == 0)
+	{
+		// vpL vpE
+		const auto* vpL = path.vertex_at(0, TransDir::LE);
+		const auto* vpE = path.vertex_at(1, TransDir::LE);
+		const auto Le = path::eval_contrb_direction(
+			scene, vpL->sp, {}, path.direction(vpL, vpE), vpL->comp, TransDir::LE, true);
+		const auto G = surface::geometry_term(vpL->sp.geom, vpE->sp.geom);
+		cst = Le * G;
+	}
+	else if (s == 0) {
+		// vpL vpE -- vE vE_prev ...
+		const auto* vpL = path.vertex_at(0, TransDir::LE);
+		const auto* vpE = path.vertex_at(1, TransDir::LE);
+		const auto Le = path::eval_contrb_direction(
+			scene, vpL->sp, {}, path.direction(vpL, vpE), vpL->comp, TransDir::LE, true);
+		const auto G = surface::geometry_term(vpL->sp.geom, vpE->sp.geom);
+		const auto conn = connection_term(1, TransDir::LE);
+		cst = Le * G * conn;
+	}
+	else if (t == 0) {
+		// ... vL_prev vL -- vpL vpE
+		const auto* vpL = path.vertex_at(1, TransDir::EL);
+		const auto* vpE = path.vertex_at(0, TransDir::EL);
+		const auto We = path::eval_contrb_direction(
+			scene, vpE->sp, {}, path.direction(vpE, vpL), vpE->comp, TransDir::EL, true);
+		const auto G = surface::geometry_term(vpE->sp.geom, vpL->sp.geom);
+		const auto conn = connection_term(1, TransDir::EL);
+		cst = We * G * conn;
+	}
+	else {
+		// ... vL_prev vL -- vpL vpE -- vE vE_prev ...
+		const auto* vpL = path.vertex_at(s, TransDir::LE);
+		const auto* vpE = path.vertex_at(t, TransDir::EL);
+		const auto G = surface::geometry_term(vpL->sp.geom, vpE->sp.geom);
+		const auto connL = connection_term(s - 1, TransDir::LE);
+		const auto connE = connection_term(t - 1, TransDir::EL);
+		cst = connL * G * connE;
+	}
+
+	return cst;
+}
+
 // Evaluate evaluate contribution function
 Vec3 eval_measurement_contrb(const Path& path, const Scene* scene, int s) {
     const int n = path.num_verts();
@@ -230,6 +402,39 @@ Vec3 eval_measurement_contrb(const Path& path, const Scene* scene, int s) {
     const auto cst = eval_connection_term(path, scene, s);
 
     return f_prod_L * cst * f_prod_E;
+}
+
+// Evaluate evaluate contribution function
+Vec3 eval_measurement_contrb_inter(const Path& path, const Scene* scene, int s) {
+	const int n = path.num_verts();
+	const int t = n - s - 2;
+
+	// Compute contribution for subpath (l = s or t)
+	const auto eval_contrb_subpath = [&](int l, TransDir trans_dir) -> Vec3 {
+		if (l == 0) {
+			return Vec3(1_f);
+		}
+		auto f_prod = Vec3(1_f);
+		for (int i = 0; i < l - 1; i++) {
+			const auto* v = path.vertex_at(i, trans_dir);
+			const auto* v_prev = path.vertex_at(i - 1, trans_dir);
+			const auto* v_next = path.vertex_at(i + 1, trans_dir);
+			const auto wi = path.direction(v, v_prev);
+			const auto wo = path.direction(v, v_next);
+			f_prod *= path::eval_contrb_direction(scene, v->sp, wi, wo, v->comp, trans_dir, false);
+			f_prod *= surface::geometry_term(v->sp.geom, v_next->sp.geom);
+		}
+		return f_prod;
+	};
+
+	// Product of terms
+	const auto f_prod_L = eval_contrb_subpath(s, TransDir::LE);
+	const auto f_prod_E = eval_contrb_subpath(t, TransDir::EL);
+
+	// Connection term
+	const auto cst = eval_connection_term_inter(path, scene, s);
+
+	return f_prod_L * cst * f_prod_E;
 }
 
 
@@ -457,7 +662,7 @@ public:
             // Extract 4 vertices from the mesh
             auto* portal_mesh = json::comp_ref<Mesh>(prop, "portal");
             if (portal_mesh->num_triangles() != 2) {
-                LM_THROW_EXCEPTION(Error::InvalidArgument, "Portal is not quad");
+                LM_THROW_EXCEPTION(Error::InvalidArgument, "Portal is not a quad");
             }
             const auto tri = portal_mesh->triangle_at(0);
 
@@ -591,5 +796,198 @@ public:
 };
 
 LM_COMP_REG_IMPL(Renderer_Portal_BDPT_Fixed, "renderer::portal_bdpt_fixed");
+
+/*
+	Implements portal-based BDPT (simplified version).
+	Simplifications:
+
+	  - Number of portals is limited to one.
+	  - Only consider the strategies using portals.
+	  - Portal edge (path edge passing through a portal) is limited to length 1.
+	  (- Fixed path length.)
+*/
+class Renderer_Portal_BDPT_Inter final : public Renderer {
+private:
+	Scene* scene_;                                  // Reference to scene asset
+	Film* film_;                                    // Reference to film asset for output
+	int min_verts_;                                 // Minimum number of path vertices
+	int max_verts_;                                 // Maximum number of path vertices
+	std::optional<unsigned int> seed_;              // Random seed
+	Component::Ptr<scheduler::Scheduler> sched_;    // Scheduler for parallel processing
+	Portal portal_;                                 // Underlying portal
+
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+	mutable std::vector<std::vector<Ptr<Film>>> strategy_films_;
+	std::unordered_map<std::string, Film*> strategy_film_name_map_;
+#endif
+
+public:
+	virtual Component* underlying(const std::string& name) const override {
+		return strategy_film_name_map_.at(name);
+	}
+
+	virtual void construct(const Json& prop) override {
+		scene_ = json::comp_ref<Scene>(prop, "scene");
+		film_ = json::comp_ref<Film>(prop, "output");
+		min_verts_ = json::value<int>(prop, "min_verts", 2);
+		max_verts_ = json::value<int>(prop, "max_verts");
+
+		seed_ = json::value_or_none<unsigned int>(prop, "seed");
+		const auto sched_name = json::value<std::string>(prop, "scheduler");
+		sched_ = comp::create<scheduler::Scheduler>(
+			"scheduler::spi::" + sched_name, make_loc("scheduler"), prop);
+
+		// ----------------------------------------------------------------------------------------
+
+		// Load portal
+		auto ps = prop["portal"];
+		if (ps.is_array()) {
+			// The portal is specified by array of vec3
+			portal_ = Portal(ps[0], ps[1], ps[2]);
+		}
+		else if (ps.is_string()) {
+			// The portal is specified by mesh
+			// Extract 4 vertices from the mesh
+			auto* portal_mesh = json::comp_ref<Mesh>(prop, "portal");
+			if (portal_mesh->num_triangles() != 2) {
+				LM_THROW_EXCEPTION(Error::InvalidArgument, "Portal is not a quad");
+			}
+			const auto tri = portal_mesh->triangle_at(0);
+
+			/*
+				   p3
+				 / |
+			  p1 - p2
+			*/
+			portal_ = Portal(tri.p2.p, tri.p3.p, tri.p1.p);
+		}
+		else {
+			LM_THROW_EXCEPTION(Error::InvalidArgument, "Invalid type for portal parameter");
+		}
+
+		// ---------------------------------------------------------------------------------------- 
+
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+		const auto size = film_->size();
+		for (int k = 2; k <= max_verts_; k++) {
+			strategy_films_.emplace_back();
+			for (int s = 0; s <= k - 2; s++) {				// Subtract intermediate path length
+				const auto name = fmt::format("film_{}_{}", k, s);
+				auto film = comp::create<Film>("film::bitmap", make_loc(name), {
+					{"w", size.w},
+					{"h", size.h}
+					});
+				film->clear();
+				strategy_film_name_map_[name] = film.get();
+				strategy_films_.back().push_back(std::move(film));
+			}
+		}
+#endif
+	}
+
+	virtual Json render() const override {
+		scene_->require_renderable();
+		film_->clear();
+		const auto size = film_->size();
+		timer::ScopedTimer st;
+
+		// Execute parallel process
+		const auto processed = sched_->run([&](long long, long long, int threadid) {
+			// Per-thread random number generator
+			thread_local Rng rng(seed_ ? *seed_ + threadid : math::rng_seed());
+
+			// Sample subpaths
+			const auto subpathE = path::sample_subpath(rng, scene_, max_verts_, TransDir::EL);
+			const auto subpathL = path::sample_subpath(rng, scene_, max_verts_, TransDir::LE);
+			const int nE = subpathE.num_verts();
+			const int nL = subpathL.num_verts();
+
+			// Sample intermediate path
+			const auto subpathI = portalbidir::sample_intermediate_subpath(rng, scene_, portal_);
+			const int nI = subpathI.num_verts();
+			if (nI < 2) {
+				// We need a valid intermediate subpath
+				return;
+			}
+
+			// Generate full paths with number of vertices num_verts
+			// s: number of vertices in light subpath
+			// t: number of vertices in eye subpath
+			// r: number of vertices in intermediate subpath is fixed to 2
+			// num_verts = s + t + 2
+			const int r = 2;
+			for (int s = 0; s <= nL; s++) {
+				for (int t = 0; t <= nE; t++) {
+
+					const int k = s + t + r;
+					if (k < min_verts_ || max_verts_ < k) {
+						continue;
+					}
+					// Connect subpaths and generate a full path
+					const auto path = portalbidir::connect_subpaths_inter(scene_, subpathL, subpathE, subpathI, s, t);
+					if (!path) {
+						// Failed connection
+						continue;
+					}
+
+#if BDPT_PORTAL_POLL_PATHS
+					if (threadid == 0) {
+						debug::poll({
+							{"id", "path"},
+							{"path", *path}
+							});
+					}
+#endif
+
+					// Evaluate contribution and probability
+					const auto f = portalbidir::eval_measurement_contrb_inter(*path, scene_, s);
+					if (math::is_zero(f)) {
+						continue;
+					}
+					const auto p = portalbidir::pdf(*path, scene_, portal_, s);
+					if (p == 0_f) {
+						continue;
+					}
+
+					// Unweighted contribution
+					const auto C_unweighted = f / p;
+
+					// MIS weight
+					const auto w = portalbidir::eval_mis_weight(*path, scene_, portal_, s);
+
+					// Weighted contribution
+					const auto C = w * C_unweighted;
+
+					// Accumulate contribution
+					const auto rp = path->raster_position(scene_);
+					film_->splat(rp, C);
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+					auto& strategy_film = strategy_films_[k - 2][s];
+					strategy_film->splat(rp, C_unweighted);
+#endif
+				}
+			}
+			});
+
+		// Rescale film
+		const auto scale = Float(size.w * size.h) / processed;
+		film_->rescale(scale);
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+		for (int k = 2; k <= max_verts_; k++) {
+			for (int s = 0; s <= k - 2; s++) {				// Subtract intermediate length
+				strategy_films_[k - 2][s]->rescale(scale);
+			}
+		}
+#endif
+
+		return {
+			{"processed", processed},
+			{"elapsed", st.now()}
+		};
+	}
+};
+
+LM_COMP_REG_IMPL(Renderer_Portal_BDPT_Inter, "renderer::portal_bdpt_inter");
+
 
 LM_NAMESPACE_END(LM_NAMESPACE)

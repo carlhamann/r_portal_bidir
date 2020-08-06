@@ -982,3 +982,69 @@ def portal_cube2(scene, scene_path):
     portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal.obj'))
 
     return portal_mesh
+	
+def cornell_double(scene, scene_path):
+    base_path = os.path.join(scene_path, 'custom')
+    camera = lm.load_camera('camera1', 'pinhole', {
+    'position': [0, 1, 5],
+    'center': [0, 1, 0],
+    'up': [0,1,0],
+    'vfov': 43.001194,
+    'aspect': 16/9
+    })
+
+    model = lm.load_model('model_obj', 'wavefrontobj', {
+	    'path': os.path.join(base_path, 'cornell_double.obj')
+    })
+
+    scene.add_primitive(camera=camera)
+    scene.add_primitive(model=model)  
+
+    # Portal mesh
+    portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal.obj'))
+
+    return portal_mesh
+	
+def cornell_double3(scene, scene_path):
+    base_path = os.path.join(scene_path, 'custom')
+    camera = lm.load_camera('camera1', 'pinhole', {
+    'position': [0, 1, 5],
+    'center': [0, 1, 0],
+    'up': [0,1,0],
+    'vfov': 43.001194,
+    'aspect': 16/9
+    })
+
+    model = lm.load_model('model_obj', 'wavefrontobj', {
+	    'path': os.path.join(base_path, 'cornell_double3.obj')
+    })
+
+    scene.add_primitive(camera=camera)
+    scene.add_primitive(model=model)  
+
+    # Portal mesh
+    portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal.obj'))
+
+    return portal_mesh
+	
+def cornell_double_fixed(scene, scene_path):
+    base_path = os.path.join(scene_path, 'custom')
+    camera = lm.load_camera('camera1', 'pinhole', {
+    'position': [0, 1, 5],
+    'center': [0, 1, 0],
+    'up': [0,1,0],
+    'vfov': 43.001194,
+    'aspect': 16/9
+    })
+
+    model = lm.load_model('model_obj', 'wavefrontobj', {
+	    'path': os.path.join(base_path, 'doublebox_fixed2.obj')
+    })
+
+    scene.add_primitive(camera=camera)
+    scene.add_primitive(model=model)  
+
+    # Portal mesh
+    portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal_fixed.obj'))
+
+    return portal_mesh

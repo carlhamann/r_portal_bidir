@@ -15,7 +15,7 @@
 
 # # Testing portal BDPT (simplified version)
 #
-# This notebooks tests `renderer::portal_bdpt_fixed`.
+# This notebooks tests `renderer::portal_bdpt_inter1`.
 
 # %load_ext autoreload
 # %autoreload 2
@@ -58,7 +58,7 @@ def render(scene, name, renderer_name, base_dir, num_verts, **kwargs):
     renderer = lm.load_renderer('renderer', renderer_name,
                                 scene=scene,
                                 output=film,
-                                min_verts=num_verts,  # Number of vertices must be the same
+                                min_verts=2,  # Number of vertices must be the same
                                 max_verts=num_verts,
                                 scheduler='time',
                                 render_time=30,
@@ -90,7 +90,7 @@ def execute_experiment(scene_name, base_scene_path, num_verts):
         display_image(img_bdpt)
     
     # w/ portal BDPT simplified version
-    img_portal_bdpt = render(scene, 'portal_bdpt', 'portal_bdpt_fixed', base_dir, num_verts, portal=portal_mesh)
+    img_portal_bdpt = render(scene, 'portal_bdpt', 'portal_bdpt_inter', base_dir, num_verts, portal=portal_mesh)
     display_image(img_portal_bdpt)
     
     # Compute difference
@@ -99,30 +99,31 @@ def execute_experiment(scene_name, base_scene_path, num_verts):
         #display_error(rrmse_pixelwised(img_bdpt, img_portal_bdpt))
         
     # Per-strategy images
-    for s in range(0,num_verts+1-2):
-        t = num_verts-s-2
-        f = lm.Film.cast(lm.comp.get('$.assets.renderer.film_%d' % s)) 
-        img = np.copy(f.buffer())
-        title = 'Strategy (s,t)=(%d,%d)' % (s,t)
-        display_image(img, title=title)
-        f.save(os.path.join(base_dir, 'strategy_%d_%d.hdr' % (s,t)))
-        if lm.Release:
-            diff_gauss(img_bdpt, img, scale=5, title=title)
+    for k in range(2, num_verts+1):
+        for s in range(0,k+1 - 2):
+            t = k-s-2
+            f = lm.Film.cast(lm.comp.get('$.assets.renderer.film_%d_%d' % (k, s))) 
+            img = np.copy(f.buffer())
+            title = 'Strategy (s,t)=(%d,%d)' % (s,t)
+            display_image(img, title=title)
+            f.save(os.path.join(base_dir, 'strategy_%d_%d.hdr' % (s,t)))
+            if lm.Release:
+                diff_gauss(img_bdpt, img, scale=5, title=title)		
 
 
 # ## Rendering
 
-# Glossy object in the box, connected by a portal, illuminated with environment light
-execute_experiment('portal_box_dragon', base_scene_path=env.scene_path, num_verts=5)
-
-# Area light, diffuse plane, portal between two quads
-execute_experiment('cornell_double3', base_scene_path=env.scene_path, num_verts=5)
+# Double box scene
+execute_experiment('cornell_double', base_scene_path=env.scene_path, num_verts=8)
 
 # Area light, diffuse plane, portal between two quads
 execute_experiment('plane2_portal', base_scene_path='scene', num_verts=3)
 
 # Diffuse plane in the box, connected by a portal, illuminated with environment light
 execute_experiment('portal_box', base_scene_path='scene', num_verts=3)
+
+# Glossy object in the box, connected by a portal, illuminated with environment light
+execute_experiment('portal_box_dragon', base_scene_path=env.scene_path, num_verts=5)
 
 # Cube with diffuse plane, a portal separate the cube into the half
 # This scene is created to test mis when a path can contain multiple portal edges

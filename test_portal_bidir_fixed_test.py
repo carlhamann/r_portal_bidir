@@ -90,7 +90,7 @@ def execute_experiment(scene_name, base_scene_path, num_verts):
         display_image(img_bdpt)
     
     # w/ portal BDPT simplified version
-    img_portal_bdpt = render(scene, 'portal_bdpt', 'portal_bdpt_fixed', base_dir, num_verts, portal=portal_mesh)
+    img_portal_bdpt = render(scene, 'portal_bdpt', 'portal_bdpt_fixed_test', base_dir, num_verts, portal=portal_mesh)
     display_image(img_portal_bdpt)
     
     # Compute difference
@@ -112,9 +112,6 @@ def execute_experiment(scene_name, base_scene_path, num_verts):
 
 # ## Rendering
 
-# Glossy object in the box, connected by a portal, illuminated with environment light
-execute_experiment('portal_box_dragon', base_scene_path=env.scene_path, num_verts=5)
-
 # Area light, diffuse plane, portal between two quads
 execute_experiment('cornell_double3', base_scene_path=env.scene_path, num_verts=5)
 
@@ -123,6 +120,9 @@ execute_experiment('plane2_portal', base_scene_path='scene', num_verts=3)
 
 # Diffuse plane in the box, connected by a portal, illuminated with environment light
 execute_experiment('portal_box', base_scene_path='scene', num_verts=3)
+
+# Glossy object in the box, connected by a portal, illuminated with environment light
+execute_experiment('portal_box_dragon', base_scene_path=env.scene_path, num_verts=5)
 
 # Cube with diffuse plane, a portal separate the cube into the half
 # This scene is created to test mis when a path can contain multiple portal edges

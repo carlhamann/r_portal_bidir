@@ -46,7 +46,7 @@ def display_scene(lm_scene):
             color='#000000',
             wireframe=True,
             transparent=True,
-            opacity=0.1,
+            opacity=0.2,
             depthTest=False
         )
 

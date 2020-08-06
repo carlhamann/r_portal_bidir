@@ -68,7 +68,8 @@ scene = lm.load_scene('scene', 'default', accel=accel)
 
 #portal_mesh = lmscene.portal_box_dragon(scene, env.scene_path)
 #portal_mesh = lmscene.plane2_portal(scene, 'scene')
-portal_mesh = lmscene.portal_cube(scene, 'scene')
+#portal_mesh = lmscene.plane2_portal(scene, 'scene')
+portal_mesh = lmscene.cornell_double_fixed(scene, env.scene_path)
 
 scene.build()
 # -
@@ -94,8 +95,8 @@ def render(scene, name, **kwargs):
     renderer = lm.load_renderer('renderer', name,
         scene=scene,
         output=film,
-        min_verts=3,
-        max_verts=3,
+        min_verts=6,
+        max_verts=6,
         scheduler='time',
         render_time=20,
         samples_per_iter=10,
@@ -143,7 +144,7 @@ def on_poll(j):
         return
     id = j['id']
     if id == 'path':
-        if count > 10:
+        if count > 0:
             return
         display_path(th_scene, vs=j['path'], color='#0000cc', **common_mat_params)
         count += 1
