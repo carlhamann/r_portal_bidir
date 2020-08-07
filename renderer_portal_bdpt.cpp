@@ -990,4 +990,192 @@ public:
 LM_COMP_REG_IMPL(Renderer_Portal_BDPT_Inter, "renderer::portal_bdpt_inter");
 
 
+class Renderer_Portal_BDPT_Fixed_Test final : public Renderer {
+private:
+	Scene* scene_;                                  // Reference to scene asset
+	Film* film_;                                    // Reference to film asset for output
+	int num_verts_;                                 // Number of vertices
+	std::optional<unsigned int> seed_;              // Random seed
+	Component::Ptr<scheduler::Scheduler> sched_;    // Scheduler for parallel processing
+	Portal portal_;                                 // Underlying portal
+
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+	mutable std::vector<Ptr<Film>> strategy_films_;
+	std::unordered_map<std::string, Film*> strategy_film_name_map_;
+#endif
+
+public:
+	virtual Component* underlying(const std::string& name) const override {
+		return strategy_film_name_map_.at(name);
+	}
+
+	virtual void construct(const Json& prop) override {
+		scene_ = json::comp_ref<Scene>(prop, "scene");
+		film_ = json::comp_ref<Film>(prop, "output");
+		const int min_verts = json::value<int>(prop, "min_verts");
+		const int max_verts = json::value<int>(prop, "max_verts");
+		if (min_verts != max_verts) {
+			LM_THROW_EXCEPTION(Error::InvalidArgument, "min_verts must be equal to max_verts");
+		}
+		num_verts_ = max_verts;
+
+		seed_ = json::value_or_none<unsigned int>(prop, "seed");
+		const auto sched_name = json::value<std::string>(prop, "scheduler");
+		sched_ = comp::create<scheduler::Scheduler>(
+			"scheduler::spi::" + sched_name, make_loc("scheduler"), prop);
+
+		// ----------------------------------------------------------------------------------------
+
+		// Load portal
+		auto ps = prop["portal"];
+		if (ps.is_array()) {
+			// The portal is specified by array of vec3
+			portal_ = Portal(ps[0], ps[1], ps[2]);
+		}
+		else if (ps.is_string()) {
+			// The portal is specified by mesh
+			// Extract 4 vertices from the mesh
+			auto* portal_mesh = json::comp_ref<Mesh>(prop, "portal");
+			if (portal_mesh->num_triangles() != 2) {
+				LM_THROW_EXCEPTION(Error::InvalidArgument, "Portal is not a quad");
+			}
+			const auto tri = portal_mesh->triangle_at(0);
+
+			/*
+				   p3
+				 / |
+			  p1 - p2
+			*/
+			portal_ = Portal(tri.p2.p, tri.p3.p, tri.p1.p);
+		}
+		else {
+			LM_THROW_EXCEPTION(Error::InvalidArgument, "Invalid type for portal parameter");
+		}
+
+		// ---------------------------------------------------------------------------------------- 
+
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+		const auto size = film_->size();
+		for (int s = 0; s <= num_verts_ - 2; s++) {
+			const auto name = fmt::format("film_{}", s);
+			auto film = comp::create<Film>("film::bitmap", make_loc(name), {
+					{"w", size.w},
+					{"h", size.h}
+				});
+			film->clear();
+			strategy_film_name_map_[name] = film.get();
+			strategy_films_.push_back(std::move(film));
+		}
+#endif
+	}
+
+	virtual Json render() const override {
+		scene_->require_renderable();
+		film_->clear();
+		const auto size = film_->size();
+		timer::ScopedTimer st;
+
+		// Execute parallel process
+		const auto processed = sched_->run([&](long long, long long, int threadid) {
+			// Per-thread random number generator
+			thread_local Rng rng(seed_ ? *seed_ + threadid : math::rng_seed());
+
+			// Sample subpaths
+			const auto subpathE = path::sample_subpath(rng, scene_, num_verts_, TransDir::EL);
+			const auto subpathL = path::sample_subpath(rng, scene_, num_verts_, TransDir::LE);
+			const int nE = subpathE.num_verts();
+			const int nL = subpathL.num_verts();
+
+			// Sample intermediate path
+			const auto subpathI = portalbidir::sample_intermediate_subpath(rng, scene_, portal_);
+			const int nI = subpathI.num_verts();
+			if (nI < 2) {
+				// We need a valid intermediate subpath
+				return;
+			}
+
+			// Generate full paths with number of vertices num_verts
+			// s: number of vertices in light subpath
+			// t: number of vertices in eye subpath
+			// r: number of vertices in intermediate subpath is fixed to 2
+			// num_verts = s + t + 2
+			const int r = 2;
+			for (int s = 0; s <= num_verts_; s++) {
+				const int t = num_verts_ - r - s;
+				if (t < 0 || nE < t) {
+					continue;
+				}
+				if (s < 0 || nL < s) {
+					continue;
+				}
+
+				// Connect subpaths and generate a full path
+				const auto path = portalbidir::connect_subpaths(scene_, subpathL, subpathE, subpathI, s, t);
+				if (!path) {
+					// Failed connection
+					continue;
+				}
+
+#if BDPT_PORTAL_POLL_PATHS
+				if (threadid == 0) {
+
+					// Poll paths where the raster position is on the back wall
+					const auto* vE2 = path->vertex_at(1, TransDir::EL);
+					if (vE2 != nullptr && abs(vE2->sp.geom.p.z - (-1.05467)) < 0.01)
+					{
+						debug::poll({
+							{"id", "path"},
+							{"path", *path}
+							});
+					}
+				}
+#endif
+
+				// Evaluate contribution and probability
+				const auto f = portalbidir::eval_measurement_contrb(*path, scene_, s);
+				if (math::is_zero(f)) {
+					continue;
+				}
+				const auto p = portalbidir::pdf(*path, scene_, portal_, s);
+				if (p == 0_f) {
+					continue;
+				}
+
+				// Unweighted contribution
+				const auto C_unweighted = f / p;
+
+				// MIS weight
+				const auto w = portalbidir::eval_mis_weight(*path, scene_, portal_, s);
+
+				// Weighted contribution
+				const auto C = w * C_unweighted;
+
+				// Accumulate contribution
+				const auto rp = path->raster_position(scene_);
+				film_->splat(rp, C);
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+				auto& strategy_film = strategy_films_[s];
+				strategy_film->splat(rp, C_unweighted);
+#endif
+			}
+			});
+
+		// Rescale film
+		const auto scale = Float(size.w * size.h) / processed;
+		film_->rescale(scale);
+#if BDPT_PORTAL_PER_STRATEGY_FILM
+		for (int s = 0; s <= num_verts_ - 2; s++) {
+			strategy_films_[s]->rescale(scale);
+		}
+#endif
+
+		return {
+			{"processed", processed},
+			{"elapsed", st.now()}
+		};
+	}
+};
+
+LM_COMP_REG_IMPL(Renderer_Portal_BDPT_Fixed_Test, "renderer::portal_bdpt_fixed_test");
+
 LM_NAMESPACE_END(LM_NAMESPACE)

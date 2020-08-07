@@ -112,6 +112,9 @@ def execute_experiment(scene_name, base_scene_path, num_verts):
 
 # ## Rendering
 
+# Double box with portal window which has depth (not a simple polygon)
+execute_experiment('cornell_double_depth', base_scene_path=env.scene_path, num_verts=5)
+
 # Glossy object in the box, connected by a portal, illuminated with environment light
 execute_experiment('portal_box_dragon', base_scene_path=env.scene_path, num_verts=5)
 

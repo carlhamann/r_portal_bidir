@@ -1048,3 +1048,25 @@ def cornell_double_fixed(scene, scene_path):
     portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal_fixed.obj'))
 
     return portal_mesh
+	
+def cornell_double_depth(scene, scene_path):
+    base_path = os.path.join(scene_path, 'custom')
+    camera = lm.load_camera('camera1', 'pinhole', {
+    'position': [0, 1, 5],
+    'center': [0, 1, 0],
+    'up': [0,1,0],
+    'vfov': 43.001194,
+    'aspect': 16/9
+    })
+
+    model = lm.load_model('model_obj', 'wavefrontobj', {
+	    'path': os.path.join(base_path, 'doublebox_hole_depth.obj')
+    })
+
+    scene.add_primitive(camera=camera)
+    scene.add_primitive(model=model)  
+
+    # Portal mesh
+    portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal_hole_depth.obj'))
+
+    return portal_mesh

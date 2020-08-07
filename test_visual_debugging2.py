@@ -69,7 +69,7 @@ scene = lm.load_scene('scene', 'default', accel=accel)
 #portal_mesh = lmscene.portal_box_dragon(scene, env.scene_path)
 #portal_mesh = lmscene.plane2_portal(scene, 'scene')
 #portal_mesh = lmscene.plane2_portal(scene, 'scene')
-portal_mesh = lmscene.cornell_double_fixed(scene, env.scene_path)
+portal_mesh = lmscene.cornell_double_depth(scene, env.scene_path)
 
 scene.build()
 # -
@@ -168,7 +168,7 @@ lm.debug.reg_on_poll(on_poll)
 
 display_portal_mesh(th_scene, portal_mesh)
 
-img = render(scene, 'portal_bdpt_fixed',
+img = render(scene, 'portal_bdpt_fixed_test',
     #seed=42,
     portal=portal_mesh)
 display_image(img)
