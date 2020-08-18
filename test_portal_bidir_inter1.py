@@ -61,7 +61,7 @@ def render(scene, name, renderer_name, base_dir, num_verts, **kwargs):
                                 min_verts=2,  # Number of vertices must be the same
                                 max_verts=num_verts,
                                 scheduler='time',
-                                render_time=30,
+                                render_time=300,
                                 seed=42,
                                 **kwargs)
     out = renderer.render()
@@ -113,20 +113,17 @@ def execute_experiment(scene_name, base_scene_path, num_verts):
 
 # ## Rendering
 
-# Double box with portal window which has depth (not a simple polygon)
-execute_experiment('cornell_double_depth', base_scene_path=env.scene_path, num_verts=8)
-
-# Double box scene
-execute_experiment('cornell_double', base_scene_path=env.scene_path, num_verts=8)
-
 # Area light, diffuse plane, portal between two quads
-execute_experiment('plane2_portal', base_scene_path='scene', num_verts=3)
+execute_experiment('plane2_portal', base_scene_path='scene', num_verts=8)
+
+# Glossy object in the box, connected by a portal, illuminated with environment light
+execute_experiment('portal_box_dragon', base_scene_path=env.scene_path, num_verts=10)
+
+# Double box with portal window which has depth (not a simple polygon)
+execute_experiment('cornell_double_depth', base_scene_path=env.scene_path, num_verts=10)
 
 # Diffuse plane in the box, connected by a portal, illuminated with environment light
 execute_experiment('portal_box', base_scene_path='scene', num_verts=3)
-
-# Glossy object in the box, connected by a portal, illuminated with environment light
-execute_experiment('portal_box_dragon', base_scene_path=env.scene_path, num_verts=5)
 
 # Cube with diffuse plane, a portal separate the cube into the half
 # This scene is created to test mis when a path can contain multiple portal edges

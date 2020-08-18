@@ -23,32 +23,99 @@ LM_NAMESPACE_BEGIN(portalbidir)
 // Conventionally, we assume the normal of the portal mesh is facing toward the outside.
 // That is, vs[0] connects to the light subpath and vs[1] connects to the eye subpath.
 Path sample_intermediate_subpath(Rng& rng, const Scene* scene, const Portal& portal) {
-    Path path;
+	Path path;
 
-    // Sample a ray from the portal
-    Ray portal_ray = portal.sample_ray(rng);
-    {
-        // 1. Intersection to next surface
-        const auto hit = scene->intersect(portal_ray);
-        if (!hit) {
-            return {};
-        }
-        // Sample component & add a vertex
-        const auto s_comp = path::sample_component(rng, scene, *hit, -portal_ray.d);
-        path.vs.push_back({ *hit, s_comp.comp });
-    }
-    {
-        // 2. Intersection to next surface in opposite direction
-        const auto hit = scene->intersect({ portal_ray.o, -portal_ray.d });
-        if (!hit) {
-            return {};
-        }
-        // Sample component & add a vertex
-        const auto s_comp = path::sample_component(rng, scene, *hit, portal_ray.d);
-        path.vs.push_back({ *hit, s_comp.comp });
-    }
+	// Sample a ray from the portal
+	Ray portal_ray = portal.sample_ray(rng);
+	{
+		// 1. Intersection to next surface
+		const auto hit = scene->intersect(portal_ray);
+		if (!hit) {
+			return {};
+		}
+		// Sample component & add a vertex
+		const auto s_comp = path::sample_component(rng, scene, *hit, -portal_ray.d);
+		path.vs.push_back({ *hit, s_comp.comp });
+	}
+	{
+		// 2. Intersection to next surface in opposite direction
+		const auto hit = scene->intersect({ portal_ray.o, -portal_ray.d });
+		if (!hit) {
+			return {};
+		}
+		// Sample component & add a vertex
+		const auto s_comp = path::sample_component(rng, scene, *hit, portal_ray.d);
+		path.vs.push_back({ *hit, s_comp.comp });
+	}
 
-    return path;
+	return path;
+}
+
+// paths longer than 1
+Path sample_intermediate_subpath_long(Rng& rng, const Scene* scene, const Portal& portal, int max_verts) {
+	Path path;
+
+	// Subpaths in both directions
+	Path subpathL;
+	Path subpathE;
+
+	// Sample a ray from the portal
+	Ray portal_ray = portal.sample_ray(rng);
+	{
+		// 1.1 Intersection to next surface
+		const auto hit = scene->intersect(portal_ray);
+		if (!hit) {
+			return {};
+		}
+		// Sample component & add a vertex
+		const auto s_comp = path::sample_component(rng, scene, *hit, -portal_ray.d);
+		//path.vs.push_back({ *hit, s_comp.comp });
+
+		// 1.2 Sample subpath in light direction
+		// We initialize the inital vertex with the previous hit point
+		subpathL.vs.push_back({ *hit, s_comp.comp });
+		path::sample_subpath_from_endpoint(rng, subpathL, scene, max_verts, TransDir::EL);
+	}
+	{
+		// 2.1 Intersection to next surface in opposite direction
+		const auto hit = scene->intersect({ portal_ray.o, -portal_ray.d });
+		if (!hit) {
+			return {};
+		}
+		// Sample component & add a vertex
+		const auto s_comp = path::sample_component(rng, scene, *hit, portal_ray.d);
+		//path.vs.push_back({ *hit, s_comp.comp });
+
+		// 1.2 Sample subpath in light direction
+		// We initialize the inital vertex with the previous hit point
+		subpathE.vs.push_back({ *hit, s_comp.comp });
+		path::sample_subpath_from_endpoint(rng, subpathE, scene, max_verts, TransDir::LE);
+	}
+
+	// Now compose the final intermediate subpath:
+	// We choose about half from both sub-subpaths if possible
+	int nL = subpathL.num_verts();
+	int nE = subpathE.num_verts();
+	int numL = 0;
+	int numE = 0;
+	if (nL > nE)
+	{
+		numE = glm::min(max_verts / 2, nE);
+		numL = glm::min(max_verts - numE, nL);
+	}
+	else
+	{
+		numL = glm::min(max_verts / 2, nL);
+		numE = glm::min(max_verts - numL, nE);
+	}
+
+	// First light subpath (reverse)
+	path.vs.insert(path.vs.end(), subpathL.vs.rend() - numL, subpathL.vs.rend());
+
+	// Then eye subpath
+	path.vs.insert(path.vs.end(), subpathE.vs.begin(), subpathE.vs.begin() + numE);
+
+	return path;
 }
 
 // Connect subpaths (light, eye, intermediate) and construct a full path
@@ -228,6 +295,154 @@ std::optional<Path> connect_subpaths_inter(const Scene* scene, const Path& subpa
 	return path;
 }
 
+// Longer intermediate subpath
+std::optional<Path> connect_subpaths_long(const Scene* scene, const Path& subpathL, const Path& subpathE, const Path& subpathI, int s, int s2, int t2, int t) {
+	assert(s >= 0 && s2 >= 0 && t2 >= 0 t >= 0);
+	assert(!(s == 0 && s2 == 0 & t2 == 0 && t == 0));
+
+	Path path;
+
+	
+	if (s == 0 && t == 0 && s2 == 0)
+	{
+		// Case: t' > 0
+		const auto& vIL = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[t2 - 1];
+
+		if (vIL.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		// Just (eye-)intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + t2);
+	}
+	else if (s == 0 && t == 0 && t2 == 0)
+	{
+		// Case: s' > 0
+		const auto& vIL = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[s2 - 1];
+
+		if (vIL.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		// Just (light-)intermediate subpath (reverse)
+		path.vs.insert(path.vs.end(), subpathI.vs.rend() - s2, subpathI.vs.rend());
+	}
+	else if (s == 0 && s2 == 0 && t2 == 0)
+	{
+		// Case: t > 0
+		const auto& vL = subpathE.vs[t - 1];
+
+		if (vL.sp.geom.infinite) {
+			return {};
+		}
+
+		// Just eye subpath (reverse)
+		path.vs.insert(path.vs.end(), subpathE.vs.rend() - t, subpathE.vs.rend());
+	}
+	else if (t == 0 && s2 == 0 && t2 == 0)
+	{
+		// Case: s > 0
+		const auto& vE = subpathE.vs[s - 1];
+
+		if (vE.sp.geom.infinite) {
+			return {};
+		}
+
+		// Just light subpath
+		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
+	}
+
+
+
+	if (s == 0 && t == 0)
+	{
+		// Case: Only intermediate subpath
+		const auto& vIL = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[1];
+
+		if (vIL.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		// Just intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+	}
+	else if (s == 0) {
+		// Case: No light subpath, single connection
+		const auto& vE = subpathE.vs[t - 1];
+		const auto& vIE = subpathI.vs[1];
+
+		// Check invalid connection
+		if (vE.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+		if (!scene->visible(vE.sp, vIE.sp)) {
+			return {};
+		}
+
+		// Copy intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+
+		// Copy eye subpath
+		path.vs.insert(path.vs.end(), subpathE.vs.rend() - t, subpathE.vs.rend());
+	}
+	else if (t == 0) {
+		// Case: No eye subpath, single connection
+		const auto& vL = subpathL.vs[s - 1];
+		const auto& vIL = subpathI.vs[0];
+
+		// Check invalid connection
+		if (vL.sp.geom.infinite || vIL.sp.geom.infinite) {
+			return {};
+		}
+		if (!scene->visible(vL.sp, vIL.sp)) {
+			return {};
+		}
+
+		// Copy light subpath
+		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
+
+		// Copy intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+	}
+	else {
+		// Case: Other cases, double connections
+		const auto& vL = subpathL.vs[s - 1];
+		const auto& vE = subpathE.vs[t - 1];
+		const auto& vIL = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[1];
+		if (vL.sp.geom.infinite || vE.sp.geom.infinite || vIL.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+		if (!scene->visible(vL.sp, vIL.sp) || !scene->visible(vIE.sp, vE.sp)) {
+			return {};
+		}
+		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + 2);
+		path.vs.insert(path.vs.end(), subpathE.vs.rend() - t, subpathE.vs.rend());
+	}
+
+	// Check endpoint types
+	// We assume the initial vertex of eye subpath is always camera endpoint.
+	// That is scene.is_camera(vE) is always true.
+	auto& vL = path.vs.front();
+	if (!scene->is_light(vL.sp)) {
+		return {};
+	}
+	auto& vE = path.vs.back();
+	if (!scene->is_camera(vE.sp)) {
+		return {};
+	}
+
+	// Update the endpoint types
+	vL.sp = vL.sp.as_type(SceneInteraction::LightEndpoint);
+	vE.sp = vE.sp.as_type(SceneInteraction::CameraEndpoint);
+
+	return path;
+}
+
 // Evaluate connection term
 Vec3 eval_connection_term(const Path& path, const Scene* scene, int s) {
     const int n = path.num_verts();
@@ -316,7 +531,7 @@ Vec3 eval_connection_term_inter(const Path& path, const Scene* scene, int s) {
 		const auto* vL_prev = path.vertex_at(i - 1, TransDir::LE);
 		const auto* vE_prev = path.vertex_at(i + 2, TransDir::LE);
 
-		// Computer terms
+		// Compute terms
 		const auto fsL = path::eval_contrb_direction(
 			scene, vL->sp, path.direction(vL, vL_prev), path.direction(vL, vE), vL->comp, TransDir::LE, true);
 		const auto fsE = path::eval_contrb_direction(
@@ -804,7 +1019,6 @@ LM_COMP_REG_IMPL(Renderer_Portal_BDPT_Fixed, "renderer::portal_bdpt_fixed");
 	  - Number of portals is limited to one.
 	  - Only consider the strategies using portals.
 	  - Portal edge (path edge passing through a portal) is limited to length 1.
-	  (- Fixed path length.)
 */
 class Renderer_Portal_BDPT_Inter final : public Renderer {
 private:
@@ -990,6 +1204,13 @@ public:
 LM_COMP_REG_IMPL(Renderer_Portal_BDPT_Inter, "renderer::portal_bdpt_inter");
 
 
+// For next stage: subpathI.length() > 1
+// - Modify intermediate subpath sampling
+//  -> Call sample_subpath_from_endpoint(Rng& rng, Path& path, const Scene* scene, int max_verts, TransDir trans_dir)
+//     with path already initialized with primary position
+// 
+
+
 class Renderer_Portal_BDPT_Fixed_Test final : public Renderer {
 private:
 	Scene* scene_;                                  // Reference to scene asset
@@ -1119,14 +1340,24 @@ public:
 #if BDPT_PORTAL_POLL_PATHS
 				if (threadid == 0) {
 
-					// Poll paths where the raster position is on the back wall
 					const auto* vE2 = path->vertex_at(1, TransDir::EL);
+
+					// Poll paths where the raster position is on the back wall
 					if (vE2 != nullptr && abs(vE2->sp.geom.p.z - (-1.05467)) < 0.01)
 					{
-						debug::poll({
-							{"id", "path"},
-							{"path", *path}
-							});
+						for (int iLen = 2; iLen < path->num_verts(); iLen++)
+						{
+							const auto* v_Current = path->vertex_at(iLen, TransDir::EL);
+
+							// ...and the path leaves the light room again at some point
+							if (v_Current->sp.geom.p.z > 1.09403 + 0.01)
+							{
+								debug::poll({
+									{"id", "path"},
+									{"path", *path}
+									});
+							}
+						}
 					}
 				}
 #endif
