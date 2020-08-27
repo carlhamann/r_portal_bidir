@@ -26,9 +26,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="228.32729"
-     inkscape:cy="21.776096"
+     inkscape:zoom="2.8"
+     inkscape:cx="215.05795"
+     inkscape:cy="10.157773"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -38,11 +38,11 @@
      inkscape:snap-bbox-edge-midpoints="true"
      inkscape:snap-bbox-midpoints="true"
      inkscape:snap-object-midpoints="false"
-     inkscape:window-width="2335"
-     inkscape:window-height="1315"
-     inkscape:window-x="581"
-     inkscape:window-y="554"
-     inkscape:window-maximized="0"
+     inkscape:window-width="1600"
+     inkscape:window-height="837"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
      units="pt"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -268,7 +268,7 @@
          id="tspan850-3-7-4-3"
          x="82.494049"
          y="282.02902"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$\mathbf{w}_0$</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$w_0$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -279,7 +279,7 @@
          id="tspan850-3-7-4"
          x="71.726456"
          y="259.1142"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$\mathbf{w}_1^\leftarrow$</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$w_1^\leftarrow$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -290,7 +290,7 @@
          id="tspan850-3-7-4-9"
          x="92.686813"
          y="259.1142"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$\mathbf{w}_1^\to$</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$w_1^\to$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -301,7 +301,7 @@
          id="tspan850-3-7-4-9-0-9"
          x="66.791893"
          y="281.96832"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$\mathbf{y}_t$</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$y_s$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -312,7 +312,7 @@
          id="tspan850-3-7-4-9-0"
          x="108.44958"
          y="263.32999"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$\mathbf{z}_1$</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$z_1$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332;shape-rendering:crispEdges"
@@ -323,7 +323,7 @@
          id="tspan850-3-7-4-9-0-0"
          x="100.41937"
          y="281.98178"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$\mathbf{z}_s$</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$z_t$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -334,7 +334,7 @@
          id="tspan850-3-7-4-9-0-9-2"
          x="56.573978"
          y="263.68329"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$\mathbf{y}_1$</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111112px;font-family:'Linux Libertine';-inkscape-font-specification:'Linux Libertine';stroke-width:0.26458332">$y_1$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.82222247px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"

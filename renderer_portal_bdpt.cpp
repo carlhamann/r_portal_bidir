@@ -353,6 +353,101 @@ std::optional<Path> connect_subpaths_long(const Scene* scene, const Path& subpat
 		// Just light subpath
 		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
 	}
+	else if (s == 0 && t == 0)
+	{
+		// Case: s',t' > 0
+		const auto& vIL = subpathI.vs[0];
+		const auto& vIL_0 = subpathI.vs[s2 - 1];
+		const auto& vIE_0 = subpathI.vs[s2];
+		const auto& vIE = subpathI.vs[s2 + t2 - 1];
+
+		if (vIL.sp.geom.infinite || vIL_0.sp.geom.infinite || vIE_0.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		// Just intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + s2 + t2);
+	}
+	else if (s == 0 && s2 == 0)
+	{
+		// Case: t,t' > 0
+		const auto& vL = subpathE.vs[t - 1];
+		const auto& vIE_0 = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[t2 - 1];
+
+		if (vL.sp.geom.infinite || vIE_0.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		if (!scene->visible(vL.sp, vIE.sp)) {
+			return {};
+		}
+
+		// First intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + t2);
+		
+		// Then eye subpath (reverse)
+		path.vs.insert(path.vs.end(), subpathE.vs.rend() - t, subpathE.vs.rend());
+	}
+	else if (s == 0 && t2 == 0)
+	{
+		// Case: t,s' > 0
+		const auto& vL = subpathE.vs[t - 1];
+		const auto& vIL_0 = subpathI.vs[s2 - 1];
+		const auto& vIL = subpathI.vs[0];
+
+		if (vL.sp.geom.infinite || vIL_0.sp.geom.infinite || vIL.sp.geom.infinite) {
+			return {};
+		}
+
+		if (!scene->visible(vL.sp, vIL_0.sp)) {
+			return {};
+		}
+
+		// First intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + s2);
+
+		// Then eye subpath (reverse)
+		path.vs.insert(path.vs.end(), subpathE.vs.rend() - t, subpathE.vs.rend());
+	}
+	else if (s2 == 0 && t == 0)
+	{
+		// Case: s,t' > 0
+		const auto& vE = subpathL.vs[s - 1];
+		const auto& vIE_0 = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[t2 - 1];
+
+		if (vE.sp.geom.infinite || vIE_0.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		if (!scene->visible(vE.sp, vIE_0.sp)) {
+			return {};
+		}
+
+		// First light subpath
+		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
+
+		// Then intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + t2);
+	}
+	else if (t2 == 0 && t == 0)
+	{
+		// Case: s,s' > 0
+		const auto& vE = subpathL.vs[s - 1];
+		const auto& vIE_0 = subpathI.vs[0];
+		const auto& vIE = subpathI.vs[t2 - 1];
+
+		if (vE.sp.geom.infinite || vIE_0.sp.geom.infinite || vIE.sp.geom.infinite) {
+			return {};
+		}
+
+		// First light subpath
+		path.vs.insert(path.vs.end(), subpathL.vs.begin(), subpathL.vs.begin() + s);
+
+		// Then intermediate subpath
+		path.vs.insert(path.vs.end(), subpathI.vs.begin(), subpathI.vs.begin() + t2);
+	}
 
 
 

@@ -1038,14 +1038,14 @@ def cornell_double_fixed(scene, scene_path):
     })
 
     model = lm.load_model('model_obj', 'wavefrontobj', {
-	    'path': os.path.join(base_path, 'doublebox_fixed2.obj')
+	    'path': os.path.join(base_path, 'doublebox_fixed3.obj')
     })
 
     scene.add_primitive(camera=camera)
     scene.add_primitive(model=model)  
 
     # Portal mesh
-    portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal_fixed.obj'))
+    portal_mesh = lm.load_mesh('portal', 'wavefrontobj', path=os.path.join(base_path, 'portal_fixed2.obj'))
 
     return portal_mesh
 	

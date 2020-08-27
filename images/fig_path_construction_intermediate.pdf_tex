@@ -38,7 +38,7 @@
   \newcommand*\fsize{\dimexpr\f@size pt\relax}%
   \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
   \ifx\svgwidth\undefined%
-    \setlength{\unitlength}{345bp}%
+    \setlength{\unitlength}{266.07759366bp}%
     \ifx\svgscale\undefined%
       \relax%
     \else%
@@ -50,20 +50,20 @@
   \global\let\svgwidth\undefined%
   \global\let\svgscale\undefined%
   \makeatother%
-  \begin{picture}(1,0.22898551)%
+  \begin{picture}(1,0.2590892)%
     \lineheight{1}%
     \setlength\tabcolsep{0pt}%
     \put(0,0){\includegraphics[width=\unitlength,page=1]{fig_path_construction_intermediate.pdf}}%
-    \put(0.46182748,0.01103267){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{w}_0$\end{tabular}}}}%
-    \put(0.37335702,0.19930921){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{w}_1^\leftarrow$\end{tabular}}}}%
-    \put(0.54557494,0.19930921){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{w}_1^\to$\end{tabular}}}}%
-    \put(0.33281285,0.0115314){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{y}_t$\end{tabular}}}}%
-    \put(0.67508754,0.16467075){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{z}_1$\end{tabular}}}}%
-    \put(0.60910846,0.01142082){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{z}_s$\end{tabular}}}}%
-    \put(0.24885875,0.16176789){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\mathbf{y}_1$\end{tabular}}}}%
-    \put(0.12687619,0.17272237){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\footnotesize light\end{tabular}}}}%
+    \put(0.43430262,0.00354543){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$w_0$\end{tabular}}}}%
+    \put(0.31959055,0.24766748){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$w_1^\leftarrow$\end{tabular}}}}%
+    \put(0.54289077,0.24766748){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$w_1^\to$\end{tabular}}}}%
+    \put(0.26702041,0.00419209){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$y_s$\end{tabular}}}}%
+    \put(0.71081867,0.20275476){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$z_1$\end{tabular}}}}%
+    \put(0.62526924,0.00404871){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$z_t$\end{tabular}}}}%
+    \put(0.15816432,0.19899087){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$y_1$\end{tabular}}}}%
+    \put(0,0.21319461){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\footnotesize light\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=2]{fig_path_construction_intermediate.pdf}}%
-    \put(0.77632549,0.13783116){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\footnotesize camera\end{tabular}}}}%
+    \put(0.84208524,0.16795417){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}\footnotesize camera\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=3]{fig_path_construction_intermediate.pdf}}%
   \end{picture}%
 \endgroup%
